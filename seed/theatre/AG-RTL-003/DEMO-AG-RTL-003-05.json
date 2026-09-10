@@ -1,0 +1,113 @@
+{
+  "agent_id": "AG-RTL-003",
+  "agent_name": "Trading Performance Analyst",
+  "agent_version_id": "AGV-AG-RTL-003-1.0.0",
+  "analysis_type": "comparison",
+  "answer": {
+    "headline": "electronics leads on median visit dwell at 12.80 minutes, 29.39% of the total across 6 entry categorys.",
+    "narrative": "Ranked by the certified definition KPI-VISITDWELL-077 over 78,000 rows in DP-RTL-003.",
+    "table": {
+      "columns": [
+        "entry_category",
+        "KPI-VISITDWELL-077",
+        "observations"
+      ],
+      "rows": [
+        [
+          "electronics",
+          12.8,
+          12967
+        ],
+        [
+          "beauty",
+          6.2,
+          8535
+        ],
+        [
+          "home",
+          6.2,
+          12992
+        ],
+        [
+          "toys",
+          6.14,
+          8769
+        ],
+        [
+          "apparel",
+          6.13,
+          17268
+        ],
+        [
+          "grocery",
+          6.08,
+          17469
+        ]
+      ]
+    },
+    "visual": {
+      "spec": {
+        "direction": "higher_is_better",
+        "target": 8.0,
+        "unit": "minutes",
+        "x": "entry_category",
+        "y": "KPI-VISITDWELL-077"
+      },
+      "type": "bar"
+    }
+  },
+  "citations": [
+    {
+      "as_of": "2026-09-05T00:00:00+00:00",
+      "columns": [
+        "visit_id",
+        "visit_timestamp",
+        "region",
+        "channel",
+        "store_format",
+        "entry_category",
+        "dwell_seconds"
+      ],
+      "contract_version": "1.0.0",
+      "product_id": "DP-RTL-003"
+    }
+  ],
+  "confidence": 0.93,
+  "confidence_display": "0.93",
+  "exchange_id": "DEMO-AG-RTL-003-05",
+  "kpi_definitions": [
+    "KPI-VISITDWELL-077"
+  ],
+  "notes": [],
+  "question": "Which categories hold visitors longest?",
+  "recorded_at": "2026-09-05T23:31:00.671726+00:00",
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "trace": {
+    "cost_display": "$0.0200",
+    "cost_usd": 0.02,
+    "latency_ms": 55,
+    "rows_scanned": 78000,
+    "runtime": "analytic",
+    "tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_calls": [
+      {
+        "arguments": {
+          "grain": "month",
+          "group_by": "entry_category",
+          "limit": 24,
+          "measure": "(percentile_cont(0.5) within group (order by dwell_seconds / 60.0))",
+          "period": "all periods",
+          "table": "MARKETPLACE_DEMO.t_dp_rtl_003"
+        },
+        "cost_class": "medium",
+        "duration_ms": 52,
+        "rows_returned": 6,
+        "rows_scanned": 78000,
+        "tool": "query_dp_rtl_003"
+      }
+    ]
+  }
+}

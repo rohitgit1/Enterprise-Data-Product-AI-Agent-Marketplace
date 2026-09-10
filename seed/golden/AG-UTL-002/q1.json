@@ -1,0 +1,40 @@
+{
+  "agent_version_id": "AGV-AG-UTL-002-1.0.0",
+  "analysis_type": "driver_ranking",
+  "citations": [
+    {
+      "columns": [
+        "cause_class",
+        "feeder",
+        "major_event_day",
+        "observed_date",
+        "outage_id",
+        "region",
+        "restoration_minutes"
+      ],
+      "product_id": "DP-UTL-001"
+    }
+  ],
+  "claims": {
+    "groups": "6",
+    "rows_scanned": "21600",
+    "top": "192.98",
+    "top_share": "20.18"
+  },
+  "exchange_id": "DEMO-AG-UTL-002-01",
+  "headline": "third_party leads on average restoration time at 192.98 minutes, 20.18% of the total across 6 cause classs.",
+  "kpi_definitions": [
+    "KPI-RESTORE-064"
+  ],
+  "narrative": "Ranked by the certified definition KPI-RESTORE-064 over 21,600 rows in DP-UTL-001.",
+  "question": "Which cause classes take longest to restore?",
+  "rows_scanned": 21600,
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "runtime": "analytic",
+  "table_columns": [
+    "cause_class",
+    "KPI-RESTORE-064",
+    "observations"
+  ],
+  "visual_type": "bar"
+}

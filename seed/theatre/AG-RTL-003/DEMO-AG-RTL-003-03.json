@@ -1,0 +1,99 @@
+{
+  "agent_id": "AG-RTL-003",
+  "agent_name": "Trading Performance Analyst",
+  "agent_version_id": "AGV-AG-RTL-003-1.0.0",
+  "analysis_type": "efficiency_ranking",
+  "answer": {
+    "headline": "store leads on conversion rate at 25.24%, 53.84% of the total across 3 channels.",
+    "narrative": "Ranked by the certified definition KPI-CONVRATE-048 over 78,000 rows in DP-RTL-003.",
+    "table": {
+      "columns": [
+        "channel",
+        "KPI-CONVRATE-048",
+        "observations"
+      ],
+      "rows": [
+        [
+          "store",
+          25.24,
+          46934
+        ],
+        [
+          "digital",
+          10.85,
+          23273
+        ],
+        [
+          "marketplace",
+          10.79,
+          7793
+        ]
+      ]
+    },
+    "visual": {
+      "spec": {
+        "direction": "higher_is_better",
+        "target": 24.0,
+        "unit": "percent",
+        "x": "channel",
+        "y": "KPI-CONVRATE-048"
+      },
+      "type": "bar"
+    }
+  },
+  "citations": [
+    {
+      "as_of": "2026-09-05T00:00:00+00:00",
+      "columns": [
+        "visit_id",
+        "transaction_id",
+        "visit_timestamp",
+        "region",
+        "channel",
+        "store_format",
+        "entry_category",
+        "converted"
+      ],
+      "contract_version": "1.0.0",
+      "product_id": "DP-RTL-003"
+    }
+  ],
+  "confidence": 0.93,
+  "confidence_display": "0.93",
+  "exchange_id": "DEMO-AG-RTL-003-03",
+  "kpi_definitions": [
+    "KPI-CONVRATE-048"
+  ],
+  "notes": [],
+  "question": "Which channels convert visits into purchases best?",
+  "recorded_at": "2026-09-05T23:31:00.450398+00:00",
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "trace": {
+    "cost_display": "$0.0200",
+    "cost_usd": 0.02,
+    "latency_ms": 179,
+    "rows_scanned": 78000,
+    "runtime": "analytic",
+    "tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_calls": [
+      {
+        "arguments": {
+          "grain": "month",
+          "group_by": "channel",
+          "limit": 24,
+          "measure": "((count(distinct transaction_id))::numeric / NULLIF((count(distinct visit_id))::numeric, 0) * 100)",
+          "period": "all periods",
+          "table": "MARKETPLACE_DEMO.t_dp_rtl_003"
+        },
+        "cost_class": "medium",
+        "duration_ms": 176,
+        "rows_returned": 3,
+        "rows_scanned": 78000,
+        "tool": "query_dp_rtl_003"
+      }
+    ]
+  }
+}

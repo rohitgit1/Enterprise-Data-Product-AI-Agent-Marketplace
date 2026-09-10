@@ -1,0 +1,40 @@
+{
+  "agent_version_id": "AGV-AG-UTL-002-1.0.0",
+  "analysis_type": "performance_ranking",
+  "citations": [
+    {
+      "columns": [
+        "cause_class",
+        "feeder",
+        "major_event_day",
+        "observed_date",
+        "outage_id",
+        "region",
+        "restoration_minutes"
+      ],
+      "product_id": "DP-UTL-001"
+    }
+  ],
+  "claims": {
+    "groups": "7",
+    "rows_scanned": "21600",
+    "top": "199.53",
+    "top_share": "14.94"
+  },
+  "exchange_id": "DEMO-AG-UTL-002-02",
+  "headline": "FDR-107 leads on average restoration time at 199.53 minutes, 14.94% of the total across 7 feeders.",
+  "kpi_definitions": [
+    "KPI-RESTORE-064"
+  ],
+  "narrative": "Ranked by the certified definition KPI-RESTORE-064 over 21,600 rows in DP-UTL-001.",
+  "question": "Which feeders are slowest to restore?",
+  "rows_scanned": 21600,
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "runtime": "analytic",
+  "table_columns": [
+    "feeder",
+    "KPI-RESTORE-064",
+    "observations"
+  ],
+  "visual_type": "bar"
+}

@@ -379,3 +379,197 @@ keying it on the approval is both correct and unique by construction.
 **Consequence** Revocation ends an access rather than blacklisting a person, and re-granting
 works. This is the worst shape a permission bug can take — both sides believe access was
 given — and it was invisible until a test tried the same journey twice.
+
+### D-037 — Nine more agents, and the six defects covering them exposed (2026-09-04)
+**Context** The agent catalogue had fourteen agents against fifteen data products, and 55 of the
+75 certified KPIs were answerable by nobody. Coverage was uneven in the two ways the browse
+experience shows: three industries had one agent or none in a whole business domain, and the
+`finance` domain existed in the taxonomy with nothing in it.
+**Decision** Nine agents, chosen so that each covers only KPIs no existing agent covers —
+AG-ENG-001, AG-BNK-003, AG-HLT-003, AG-INS-003, AG-RTL-003, AG-TCH-002, AG-TEL-003, AG-TRN-002,
+AG-UTL-002. Every industry and every business domain in the taxonomy now has at least one agent,
+and 74 of 75 KPIs are covered. Manufacturing keeps its single agent: all five of its KPIs are
+already answered by AG-MFG-001, and a second one would be the duplication the agent mesh exists
+to flag.
+**Consequence** Writing an agent against a KPI is the first thing that reads that KPI, and six
+defects surfaced that way — each fixed here rather than routed around:
+
+* `KPI-LOADFACT-067` multiplied a bare `period_hours` outside an aggregate, so any query over it
+  failed. Its numerator and denominator now compute the ratio its own business definition
+  states: average demand over peak demand.
+* `KPI-RETEN-002` counted subscribers with any non-churn row, which on daily data is everyone.
+  Retention read 100% while churn on the same denominator read 2.3%. It is now the complement it
+  claims to be: active at period start, less churned.
+* A measure that cannot be pooled across periods was restricted to the latest complete period
+  *at the grain the question asked for* — so a question with no time word pooled a year of
+  monthly snapshots and carried a note saying it had not. The restriction is now never wider
+  than a month.
+* A cohort split on a column the KPI's own expression uses is the definition restated: save rate
+  was "100% where the save offer was accepted against 0% where it was not". Such a column is no
+  longer eligible, and the question becomes the slice comparison it can answer.
+* `SELECT measure AS measure, (...) AS measure` returned the wrong one of the two, silently:
+  DP-HLT-001 has a slice column named `measure`. The grouped dimension now has a reserved alias.
+* A distribution fell back to the first readable column when none matched the KPI expression,
+  which under a narrowed entitlement was a date — `percentile_cont` over a date, and a crash.
+  The column must now be both the measured one and numeric, else the question degrades to a
+  slice comparison.
+
+The same first reading recalibrated one generated column. DP-INS-001's `earned_premium` was
+drawn from a range picked beside the loss range rather than against it, putting the book's loss
+ratio at 157% — a number no insurer survives, and one nothing read until an agent covered
+`KPI-LOSSRATIO-026`. The range now yields about 70%.
+
+**Consequence** `KPI-CONVRATE-048` is left uncovered, and deliberately. Its source of record,
+DP-RTL-001, is one row per transaction line: a visit that did not convert has no row, `visit_id`
+and `transaction_id` are one-to-one across all 23,400 rows, and conversion computes to 100.00%
+everywhere. The measure needs a visit-grain product, which is a supply gap to raise rather than
+a number to publish.
+
+### D-038 — Conversion rate gets a product that can hold a visit that bought nothing (2026-09-04)
+**Context** D-037 left `KPI-CONVRATE-048` uncovered. Its source of record, DP-RTL-001, is one row
+per transaction line: a visit that did not convert has no row at all, `visit_id` and
+`transaction_id` were one-to-one across every row, and the measure computed to 100.00% in every
+slice. The denominator the definition asks for did not exist in the data.
+**Decision** DP-RTL-003, "Visit & Conversion Funnel" — one row per visit, converted or not, with
+`transaction_id` nullable. That null is the whole product: it is what a transaction-grain table
+cannot express. `KPI-CONVRATE-048` is repointed at it and removed from DP-RTL-001's certified
+list, and two measures that only exist at this grain are certified alongside it —
+`KPI-ABANDON-076` (basket abandonment, against started baskets rather than all visits, so
+browsing without intent does not read as abandonment) and `KPI-VISITDWELL-077` (median visit
+dwell). AG-RTL-003 binds the new product and covers all three, so the estate gains a product and
+no uncovered-KPI debt; it is renamed Trading Performance Analyst, because margin and conversion
+are one conversation for the person asking.
+**Consequence** Conversion reads 19.5% against the KPI's own 24% target, and the three planted
+patterns are visible: store converts at 25.2% against 10.9% digital, express format trails the
+other two at 14.6%, and electronics holds visitors nearly twice as long as any other category
+while converting worst. The last of those is the finding the funnel exists to produce and the one
+a transaction-grain table can never produce, because the visits that make it are exactly the rows
+it does not have.
+
+Two runtime defects surfaced, both from the new product's shape:
+
+* The non-poolable test compared `count(DISTINCT key)` against `count(*)`, so a column that is
+  null four fifths of the time read as a key recurring across periods, and a measure that pools
+  perfectly well was restricted to one month. It now compares against `count(key)`, and both
+  sides ignore nulls. This also lifted a false restriction on `KPI-RESTORE-064`, whose
+  `outage_id` is unique wherever it is present.
+* A question naming a slice by its unqualified noun — "which categories hold visitors longest",
+  against a column named `entry_category` — matched no slice and silently answered by whichever
+  one the coverage map happened to list first. The slice matcher now falls back to the noun the
+  column name ends in, after exact matches, so a product carrying both `category` and
+  `entry_category` still resolves the bare word to the bare column.
+
+### D-039 — Six more data products, one per gap in the industry and domain grid (2026-09-04)
+**Context** Sixteen products covered nine industries unevenly: three industries had a single
+product, and the `finance` domain — which two agents already answer in — had no product of its
+own at all. The catalogue's two browse facets are industry and business domain, and both had
+holes a consumer would hit on their first filter.
+**Decision** One product per gap, each with its own grain, its own upstream sources and its own
+certified measures, so none of them is a reslice of a product that already exists:
+
+| Product | Industry | Domain | Grain |
+|---|---|---|---|
+| DP-BNK-003 Lending & Credit Portfolio | banking | finance | loan account per month |
+| DP-TCH-002 Service Reliability & Incident | technology | operations | service per hour |
+| DP-TRN-002 Freight Cost & Margin | transportation | finance | carrier invoice line |
+| DP-MFG-002 Supplier Quality & Inbound Materials | manufacturing | supply_chain | receipt line |
+| DP-HLT-003 Workforce & Care Capacity | healthcare | operations | unit per shift |
+| DP-INS-003 Policyholder & Distribution 360 | insurance | customer | customer per month |
+
+Every industry now holds at least two products and every business domain at least one. The
+thirty measures they certify are covered by six agents written against them, so the estate gains
+products without gaining uncovered KPIs: 107 of 107 are answerable.
+
+**Consequence** Four defects surfaced, each from a shape the estate had not carried before:
+
+* A ranking always ordered descending, so a question asking which lane was thinnest was answered
+  with the fattest, and one asking where provision coverage was weakest named the strongest
+  region. The order now follows the question — and, for a quality word rather than a magnitude
+  word, the KPI's own declared direction, because the worst delinquency rate is the highest and
+  the worst margin is the lowest. Eight existing exchanges were answering the wrong end.
+* A slice was matched on its exact name or its trailing noun only, so "which vintages" against a
+  column named `vintage_band` matched nothing and silently answered by whichever slice the
+  coverage map listed first. It now falls back to any word of the column name, after exact
+  matches. Three more existing exchanges were answering a dimension nobody asked about.
+* Grounding read the `30` in "30+ Delinquency Rate" as an uncited figure. A measure's name is a
+  label, so its digits are subtracted from what the prose is held to — computed from the names
+  rather than cut out of the text, because cutting `SAIDI` out of `KPI-SAIDI-061` leaves `-061`
+  behind and invents a number that was never written.
+* The boundary matcher's action verbs had no word for the actions these domains ask for. "Award
+  the lane to a different carrier" and "roll back the release" were planned as questions rather
+  than refused as instructions. The vocabulary now carries them.
+
+Three source-system codes introduced with DP-RTL-003 were in no vocabulary. They are registered,
+and `validate:manifests` now fails on an upstream source outside the `source_system` taxonomy —
+the mesh draws its source-overlap edges from these codes, so one that is in no vocabulary is an
+edge between two products that nothing can name.
+
+Two generator calibrations were made against the measures rather than beside them: lending
+delinquency was set to land near its own 2.4% target instead of at 10%, and freight margin was
+reading 26% because fuel surcharge was billed as revenue but never counted as cost.
+
+### D-040 — The agent catalogue gets the rail the product catalogue already had (2026-09-05)
+**Context** The agents page read six filter query parameters — industry, domain, autonomy,
+certification, KPI, product — and rendered no control for any of them. The filters worked; only
+somebody willing to hand-write a query string could find them. `AGENT_FACETS` had been declared
+in `services/catalog/facets.py` since M4 and was referenced by nothing.
+**Decision** `/agents` returns facets the way `/products` does, counted by the same function
+under the same rule: each facet is counted with every *other* selection applied but not its own,
+so choosing an industry never collapses the industry list to the one row the consumer picked.
+The page grows the same `240px` rail, with the chosen filters shown as removable chips above it
+because a filter you cannot see is a filter you cannot undo.
+**Consequence** Filtering to an industry is one click and every state is a URL. The rail is
+links rather than controls, so it works without JavaScript, and the counts tell a consumer what
+they will get before they click.
+
+Manufacturing was the one industry the new rail would have landed a consumer on thinly: three
+agents everywhere else, two there, and no reliability view of a plant at all. DP-MFG-003
+(Equipment Reliability & Maintenance, one row per maintenance work order) and AG-MFG-003 fill
+that — mean time between failures, repair time, preventive adherence, unplanned share and
+spares availability, none of them measures any existing agent covers. Every industry now holds
+at least three agents and 112 of 112 KPIs are answerable.
+
+Two things the new product exposed:
+
+* Spares availability was drawn independently of whether spares were needed, so the rate came
+  out at 139% — more calls served than calls made. Availability is only defined where a part was
+  actually called for.
+* `spares_available` was not in the cohort vocabulary, so "do repairs take longer when the spare
+  was not on the shelf" was answered as a ranking by asset class rather than as the comparison
+  it asked for. It is a legitimate cohort — the KPI's own expression does not reference it — and
+  the split it produces is the finding: 394 minutes against 140.
+
+### D-041 — A demand is assessed against coverage before it is scored on similarity (2026-09-06)
+**Context** New-supply intake had one gate: `/demand/check`, which asks whether a request *reads
+like* a published product. That is a text question, and it is the right one for the moment
+somebody starts typing — but it is a weak answer to the question the board actually needs, which
+is whether anything in the estate can already **answer** what is being asked. It also compared
+every demand against data products, including a demand for an agent, so "we already have one of
+these" was being judged against the wrong sort of asset. The intake page carried no form: the
+whole flow was reachable only by hand-writing a query string.
+**Decision** `services/workflow/assessment.py` answers the coverage question from three facts the
+estate already holds — a KPI's `source_of_record`, `agent_kpi_coverage`, and
+`agent_product_binding` — and returns one of `already_served`, `enhance_agent`,
+`enhance_product`, `build_new` or `insufficient_evidence`, with the evidence it was made from.
+`/demand/assess` runs it and the similarity check together, so the page cannot show a
+recommendation made from one estate beside duplicates from another. The intake grew a real form:
+kind, the need, the KPIs the answer would carry, and the questions it would have to place.
+`check_duplicates` takes a `kind` and compares an agent demand against agents, defaulting to
+products so the submission path is unchanged. Every threshold, including how many candidates are
+worth reading, is in `manifests/rubrics/demand.yaml` under `supply_assessment` at 1.4.0.
+**Consequence** A demand naming no KPI gets `insufficient_evidence` rather than a verdict the
+evidence cannot support — the request for KPIs is not paperwork, it is the only thing that makes
+the check possible.
+
+Three things this exposed, all of them errors the first version made confidently:
+
+* A set of measures answered across *two* agents was recommended as an enhancement to whichever
+  single agent covered the most — which meant advising someone to add a measure another agent
+  already answers, the exact divergence the rationale warns against. Answered is answered,
+  however it is spread; that is an entitlement and a composition problem, not missing supply.
+* A KPI that is not in the register was reported as a coverage gap. It is not one. There is no
+  definition to answer against yet, and an agent asked to answer it would have to invent one, so
+  it is named as a definition gap instead.
+* A question was counted as placeable whenever the demand named *any* answered KPI. Almost every
+  demand does, so the unplaced-question signal disappeared exactly when it was worth having. A
+  question is placed by naming a measure something answers, or not at all.

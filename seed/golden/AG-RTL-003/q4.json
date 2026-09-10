@@ -1,0 +1,41 @@
+{
+  "agent_version_id": "AGV-AG-RTL-003-1.0.0",
+  "analysis_type": "gap_analysis",
+  "citations": [
+    {
+      "columns": [
+        "basket_abandoned",
+        "basket_started",
+        "channel",
+        "entry_category",
+        "region",
+        "store_format",
+        "visit_id",
+        "visit_timestamp"
+      ],
+      "product_id": "DP-RTL-003"
+    }
+  ],
+  "claims": {
+    "groups": "3",
+    "rows_scanned": "78000",
+    "top": "70.26",
+    "top_share": "37.05"
+  },
+  "exchange_id": "DEMO-AG-RTL-003-04",
+  "headline": "express leads on basket abandonment rate at 70.26%, 37.05% of the total across 3 store formats.",
+  "kpi_definitions": [
+    "KPI-ABANDON-076"
+  ],
+  "narrative": "Ranked by the certified definition KPI-ABANDON-076 over 78,000 rows in DP-RTL-003.",
+  "question": "Where do we abandon most baskets by store format?",
+  "rows_scanned": 78000,
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "runtime": "analytic",
+  "table_columns": [
+    "store_format",
+    "KPI-ABANDON-076",
+    "observations"
+  ],
+  "visual_type": "bar"
+}

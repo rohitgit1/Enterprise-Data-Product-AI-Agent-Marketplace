@@ -1,0 +1,40 @@
+{
+  "agent_version_id": "AGV-AG-UTL-002-1.0.0",
+  "analysis_type": "comparison",
+  "citations": [
+    {
+      "columns": [
+        "cause_class",
+        "feeder",
+        "major_event_day",
+        "observed_date",
+        "outage_id",
+        "region",
+        "restoration_minutes"
+      ],
+      "product_id": "DP-UTL-001"
+    }
+  ],
+  "claims": {
+    "groups": "3",
+    "rows_scanned": "21600",
+    "top": "195.40",
+    "top_share": "34.05"
+  },
+  "exchange_id": "DEMO-AG-UTL-002-03",
+  "headline": "Coastal leads on average restoration time at 195.40 minutes, 34.05% of the total across 3 regions.",
+  "kpi_definitions": [
+    "KPI-RESTORE-064"
+  ],
+  "narrative": "Ranked by the certified definition KPI-RESTORE-064 over 21,600 rows in DP-UTL-001.",
+  "question": "How does restoration time compare across regions?",
+  "rows_scanned": 21600,
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "runtime": "analytic",
+  "table_columns": [
+    "region",
+    "KPI-RESTORE-064",
+    "observations"
+  ],
+  "visual_type": "bar"
+}

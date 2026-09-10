@@ -1,0 +1,189 @@
+apiVersion: marketplace/v1
+kind: Agent
+metadata:
+  id: AG-RTL-003
+  name: "Trading Performance Analyst"
+  industry: retail
+  domain: finance
+  owner:
+    party_id: PTY-0040
+    team: "Retail Finance"
+    on_call: "pagerduty://retail-finance-agents"
+  autonomy_level: L1
+  certification: certified
+spec:
+  capability_statement: >-
+    Answers questions about gross margin rate, visit conversion, basket abandonment and dwell
+    by category, region, channel and store format.
+  business_value_block:
+    analyses: [performance_ranking, trend_segmented, efficiency_ranking, comparison, distribution]
+    replaces: >-
+      The weekly trading review and the footfall-to-till reconciliation done in a spreadsheet.
+    personas: [trading_finance_partner, category_finance_manager, merchandise_director]
+  out_of_scope:
+    - "Retail price changes or markdown approval"
+    - "Promotion planning or promotion approval"
+    - "Individual transaction, visit or basket enquiries"
+    - "Personalisation or targeting of a named shopper"
+  runtime:
+    provider: analytic
+    model:
+      provider: anthropic
+      id: marketplace-analytic-v1
+      temperature: 0.0
+      max_tokens: 2000
+    prompt_ref: prompts/AG-RTL-003/system@v1
+  data_products:
+    - product_id: DP-RTL-001
+      columns: [transaction_id, business_date, category, sku, region, channel, store_format, comparable_store, net_sales, cost_of_goods_sold, units]
+      access: read
+    - product_id: DP-RTL-003
+      columns: [visit_id, transaction_id, visit_timestamp, business_date, region, channel, store_format, entry_category, device_class, loyalty_identified, converted, basket_started, basket_abandoned, items_viewed, dwell_seconds]
+      access: read
+  tool_bindings:
+    - tool: query_dp_rtl_001
+      endpoint: "mcp://marketplace.${TENANT}.internal/dp/DP-RTL-001"
+      scope: "dp:DP-RTL-001:read"
+      cost_class: medium
+      row_limit: 10000
+    - tool: query_dp_rtl_003
+      endpoint: "mcp://marketplace.${TENANT}.internal/dp/DP-RTL-003"
+      scope: "dp:DP-RTL-003:read"
+      cost_class: medium
+      row_limit: 10000
+    - tool: get_kpi_definition
+      scope: "kpi:read"
+      cost_class: trivial
+    - tool: get_quality
+      scope: "quality:read"
+      cost_class: trivial
+  kpi_coverage:
+    - kpi_id: KPI-GMRATE-049
+      source_product: DP-RTL-001
+      columns_used: [business_date, category, region, channel, net_sales, cost_of_goods_sold, comparable_store]
+      grains: [week, month, quarter, year]
+      slices: [category, region, channel]
+      analysis_depth: rank_drivers
+    - kpi_id: KPI-CONVRATE-048
+      source_product: DP-RTL-003
+      columns_used: [visit_id, transaction_id, visit_timestamp, region, channel, store_format, entry_category, converted]
+      grains: [day, week, month]
+      slices: [region, channel, store_format, entry_category]
+      analysis_depth: rank_drivers
+    - kpi_id: KPI-ABANDON-076
+      source_product: DP-RTL-003
+      columns_used: [visit_id, visit_timestamp, region, channel, store_format, entry_category, basket_started, basket_abandoned]
+      grains: [day, week, month]
+      slices: [region, channel, store_format, entry_category]
+      analysis_depth: explain
+    - kpi_id: KPI-VISITDWELL-077
+      source_product: DP-RTL-003
+      columns_used: [visit_id, visit_timestamp, region, channel, store_format, entry_category, dwell_seconds]
+      grains: [day, week, month]
+      slices: [region, channel, store_format, entry_category]
+      analysis_depth: compare
+  guardrails:
+    grounding:
+      require_citation_on_numerics: true
+      on_failure: return_error
+    injection_defence: v3
+    output_filters: [pii_pattern, credential_pattern]
+    refusal_policy: >-
+      State the boundary in one sentence, name the agent or data product that does cover the
+      question, and offer a handoff or a new-supply request.
+  budgets:
+    p95_latency_ms: 6000
+    cost_per_answer_usd: 0.06
+  demo_exchanges:
+    - id: DEMO-AG-RTL-003-01
+      ordinal: 1
+      question: "Which categories have the weakest gross margin rate?"
+      kpi_class: KPI-GMRATE-049
+      analysis_type: performance_ranking
+      expected_shape:
+        headline: >-
+          the categories trading at the thinnest margin, and the spread across the range
+        visual: bar
+        table_columns: [category, gross_margin_rate_pct, net_sales]
+        must_cite: [DP-RTL-001, KPI-GMRATE-049]
+      data_tier: demo
+      max_latency_ms: 6000
+      golden_answer_ref: seed/golden/AG-RTL-003/q1.json
+      tolerance_pct: 2.0
+    - id: DEMO-AG-RTL-003-02
+      ordinal: 2
+      question: "How has gross margin rate moved month by month?"
+      kpi_class: KPI-GMRATE-049
+      analysis_type: trend_segmented
+      expected_shape:
+        headline: >-
+          the direction of margin rate over the observed months, and its size
+        visual: line
+        table_columns: [period, gross_margin_rate_pct, net_sales]
+        must_cite: [DP-RTL-001, KPI-GMRATE-049]
+      data_tier: demo
+      max_latency_ms: 6000
+      golden_answer_ref: seed/golden/AG-RTL-003/q2.json
+      tolerance_pct: 2.0
+    - id: DEMO-AG-RTL-003-03
+      ordinal: 3
+      question: "Which channels convert visits into purchases best?"
+      kpi_class: KPI-CONVRATE-048
+      analysis_type: efficiency_ranking
+      expected_shape:
+        headline: >-
+          the channels converting most visits, and the gap to the weakest
+        visual: bar
+        table_columns: [channel, conversion_rate_pct, visits]
+        must_cite: [DP-RTL-003, KPI-CONVRATE-048]
+      data_tier: demo
+      max_latency_ms: 6000
+      golden_answer_ref: seed/golden/AG-RTL-003/q3.json
+      tolerance_pct: 2.0
+    - id: DEMO-AG-RTL-003-04
+      ordinal: 4
+      question: "Where do we abandon most baskets by store format?"
+      kpi_class: KPI-ABANDON-076
+      analysis_type: gap_analysis
+      expected_shape:
+        headline: >-
+          the store formats losing most started baskets, and the distance to the best
+        visual: bar
+        table_columns: [store_format, abandonment_rate_pct, started_baskets]
+        must_cite: [DP-RTL-003, KPI-ABANDON-076]
+      data_tier: demo
+      max_latency_ms: 6000
+      golden_answer_ref: seed/golden/AG-RTL-003/q4.json
+      tolerance_pct: 2.0
+    - id: DEMO-AG-RTL-003-05
+      ordinal: 5
+      question: "Which categories hold visitors longest?"
+      kpi_class: KPI-VISITDWELL-077
+      analysis_type: comparison
+      expected_shape:
+        headline: >-
+          the categories holding attention longest, and how far apart they sit
+        visual: bar
+        table_columns: [entry_category, median_dwell_minutes, visits]
+        must_cite: [DP-RTL-003, KPI-VISITDWELL-077]
+      data_tier: demo
+      max_latency_ms: 6000
+      golden_answer_ref: seed/golden/AG-RTL-003/q5.json
+      tolerance_pct: 2.0
+  evaluation:
+    suites: [golden_accuracy, groundedness, boundary_refusal, adversarial, entitlement, compositional_exposure, consistency, cost_latency]
+    pass_threshold_pct: 92
+    cases_ref: seed/eval/AG-RTL-003/
+  value_case:
+    benefit_model: "avoided_trading_review_hours * fully_loaded_analyst_rate"
+    attribution_confidence: medium
+    assumptions:
+      - text: "avg manual minutes per margin or conversion question"
+        value: 45
+        unit: minutes
+        sample_size: 15
+        source: "retail finance time study"
+        dated: 2026-06-01
+    review:
+      last_reviewed: 2026-07-20
+      reviewer: PTY-0040

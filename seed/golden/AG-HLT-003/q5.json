@@ -1,0 +1,39 @@
+{
+  "agent_version_id": "AGV-AG-HLT-003-1.0.0",
+  "analysis_type": "compliance_ranking",
+  "citations": [
+    {
+      "columns": [
+        "activity_date",
+        "facility",
+        "item_id",
+        "substituted",
+        "substitution_eligible",
+        "therapeutic_class"
+      ],
+      "product_id": "DP-HLT-002"
+    }
+  ],
+  "claims": {
+    "groups": "5",
+    "rows_scanned": "30600",
+    "top": "19.72",
+    "top_share": "17.86"
+  },
+  "exchange_id": "DEMO-AG-HLT-003-05",
+  "headline": "immunology trails on therapeutic substitution rate at 19.72%, 17.86% of the total across 5 therapeutic classs.",
+  "kpi_definitions": [
+    "KPI-SUBST-045"
+  ],
+  "narrative": "Ranked by the certified definition KPI-SUBST-045 over 30,600 rows in DP-HLT-002.",
+  "question": "Where is therapeutic substitution weakest by therapeutic class?",
+  "rows_scanned": 30600,
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "runtime": "analytic",
+  "table_columns": [
+    "therapeutic_class",
+    "KPI-SUBST-045",
+    "observations"
+  ],
+  "visual_type": "bar"
+}

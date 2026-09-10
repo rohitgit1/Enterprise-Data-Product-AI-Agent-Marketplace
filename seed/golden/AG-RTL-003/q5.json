@@ -1,0 +1,40 @@
+{
+  "agent_version_id": "AGV-AG-RTL-003-1.0.0",
+  "analysis_type": "comparison",
+  "citations": [
+    {
+      "columns": [
+        "channel",
+        "dwell_seconds",
+        "entry_category",
+        "region",
+        "store_format",
+        "visit_id",
+        "visit_timestamp"
+      ],
+      "product_id": "DP-RTL-003"
+    }
+  ],
+  "claims": {
+    "groups": "6",
+    "rows_scanned": "78000",
+    "top": "12.80",
+    "top_share": "29.39"
+  },
+  "exchange_id": "DEMO-AG-RTL-003-05",
+  "headline": "electronics leads on median visit dwell at 12.80 minutes, 29.39% of the total across 6 entry categorys.",
+  "kpi_definitions": [
+    "KPI-VISITDWELL-077"
+  ],
+  "narrative": "Ranked by the certified definition KPI-VISITDWELL-077 over 78,000 rows in DP-RTL-003.",
+  "question": "Which categories hold visitors longest?",
+  "rows_scanned": 78000,
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "runtime": "analytic",
+  "table_columns": [
+    "entry_category",
+    "KPI-VISITDWELL-077",
+    "observations"
+  ],
+  "visual_type": "bar"
+}

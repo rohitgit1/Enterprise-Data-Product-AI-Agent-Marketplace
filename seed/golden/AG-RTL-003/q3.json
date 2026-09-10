@@ -1,0 +1,41 @@
+{
+  "agent_version_id": "AGV-AG-RTL-003-1.0.0",
+  "analysis_type": "efficiency_ranking",
+  "citations": [
+    {
+      "columns": [
+        "channel",
+        "converted",
+        "entry_category",
+        "region",
+        "store_format",
+        "transaction_id",
+        "visit_id",
+        "visit_timestamp"
+      ],
+      "product_id": "DP-RTL-003"
+    }
+  ],
+  "claims": {
+    "groups": "3",
+    "rows_scanned": "78000",
+    "top": "25.24",
+    "top_share": "53.84"
+  },
+  "exchange_id": "DEMO-AG-RTL-003-03",
+  "headline": "store leads on conversion rate at 25.24%, 53.84% of the total across 3 channels.",
+  "kpi_definitions": [
+    "KPI-CONVRATE-048"
+  ],
+  "narrative": "Ranked by the certified definition KPI-CONVRATE-048 over 78,000 rows in DP-RTL-003.",
+  "question": "Which channels convert visits into purchases best?",
+  "rows_scanned": 78000,
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "runtime": "analytic",
+  "table_columns": [
+    "channel",
+    "KPI-CONVRATE-048",
+    "observations"
+  ],
+  "visual_type": "bar"
+}

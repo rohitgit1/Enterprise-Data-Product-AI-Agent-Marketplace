@@ -232,12 +232,13 @@ def _load_context(
 # boundary probes in seed/eval/<agent>/boundary.yaml are what prove it still
 # catches the ones already declared.
 ACTION_VERBS = frozenset({
-    "activate", "agree", "apply", "approve", "authorise", "authorize", "bind", "book",
-    "cancel", "carry", "change", "close", "commit", "create", "credit", "delete",
-    "disable", "dispatch", "draft", "drop", "enable", "execute", "extend", "file",
-    "increase", "issue", "lower", "move", "open", "order", "place", "put", "raise",
-    "reduce", "reroute", "reschedule", "retune", "revoke", "schedule", "send", "sent",
-    "set", "sign", "split", "submit", "substitute", "switch", "turn", "update", "write",
+    "activate", "agree", "apply", "approve", "authorise", "authorize", "award", "bind",
+    "book", "cancel", "carry", "change", "close", "commit", "create", "credit", "delete",
+    "deploy", "disable", "dispatch", "draft", "drop", "enable", "execute", "extend",
+    "file", "increase", "issue", "lower", "move", "open", "order", "place", "put",
+    "raise", "reduce", "reject", "release", "reroute", "restart", "reschedule", "retune",
+    "revert", "revoke", "roll", "rollback", "schedule", "send", "sent", "set", "sign",
+    "split", "submit", "substitute", "switch", "tender", "turn", "update", "write",
 })
 
 # Words that make a question about one record rather than a population.
@@ -463,6 +464,13 @@ def _quantise(value: Any, unit: str, rubric: Rubric) -> Decimal | None:
 
 DEFAULT_GRAIN = "month"
 
+# The alias the grouped dimension is selected under. It is not the slice's own
+# name because a slice can be called `measure` — DP-HLT-001 has a column of that
+# name — and `SELECT measure AS measure, (...) AS measure` returns the wrong one
+# of the two silently. The presentation label stays the business name; only the
+# result-set key is reserved.
+DIMENSION_ALIAS = "dim_value"
+
 # date_trunc accepts "quarter"; interval arithmetic does not. One period at each
 # grain, spelled the way Postgres will take it.
 GRAIN_INTERVAL = {
@@ -534,8 +542,13 @@ def _needs_single_period(
     keys = _distinct_keys(kpi)
     if not keys:
         return False
+    # Against ``count(key)``, not ``count(*)``: both sides then ignore nulls.
+    # DP-RTL-003 carries one row per visit and a transaction id only where the
+    # visit converted, so a comparison against the row count reads four fifths
+    # of the column being null as the same key appearing in several periods,
+    # and restricts a measure that pools perfectly well.
     projections = ", ".join(
-        f"count(DISTINCT {key}) < count(*) AS recurs_{index}"
+        f"count(DISTINCT {key}) < count({key}) AS recurs_{index}"
         for index, key in enumerate(keys)
     )
     row = fetch_one(connection, f"SELECT {projections} FROM {table}")
@@ -544,6 +557,16 @@ def _needs_single_period(
 
 def _is_windowed(kpi: dict[str, Any]) -> bool:
     return WINDOW_MARKER in (kpi["expression"] or "").lower()
+
+
+def _narrower(left: str, right: str) -> str:
+    """The finer of two grains, by the planner's coarsest-last ordering."""
+    order = planner.GRAIN_ORDER
+    if left not in order:
+        return right
+    if right not in order:
+        return left
+    return left if order.index(left) <= order.index(right) else right
 
 
 def _run(
@@ -583,28 +606,42 @@ def _run(
         # groups — a stockout rate of zero everywhere, say — names a different
         # leader on every run, and an answer whose headline changes while its
         # numbers do not is an answer nobody can check.
-        order = "2 DESC NULLS LAST, 1"
+        #
+        # A question asking which is weakest is ordered the other way, so the
+        # group the reader asked about is the one the headline names.
+        direction = "ASC" if plan.ascending else "DESC"
+        order = f"2 {direction} NULLS LAST, 1"
 
     # Grouping by period already isolates each one; the other shapes collapse
     # the time axis, and a non-additive measure cannot survive that.
     restrict = ""
     scanned_where = ""
     covers: Any = None
+    restrict_grain = grain
     if plan.shape != planner.SHAPE_PERIOD and _needs_single_period(
         connection, context.kpi, table
     ):
+        # Never wider than a month. A question with no time word asks at the
+        # coarsest grain the KPI supports, and a year-wide window pools twelve
+        # monthly snapshots — which is the very thing this restriction exists to
+        # prevent. Products per customer over a year is twelve times products
+        # per customer, and it would carry a note claiming it had not been
+        # pooled. A grain finer than a month is kept as asked.
+        restrict_grain = _narrower(grain, DEFAULT_GRAIN)
+        restrict_period = f"date_trunc('{restrict_grain}', {time_column})"
         # The *latest complete* period, not simply the latest. A load that ended
         # one day into September makes September a period with one day in it,
         # and a rate computed over one day of a month is not a monthly rate. A
         # period counts as complete when the data reaches its final day.
         latest_complete = (
             f"(SELECT coalesce(max(p.period) FILTER (WHERE p.last >= "
-            f"   p.period + '{GRAIN_INTERVAL[grain]}'::interval - '1 day'::interval), "
+            f"   p.period + '{GRAIN_INTERVAL[restrict_grain]}'::interval "
+            f"   - '1 day'::interval), "
             f"   max(p.period)) "
-            f" FROM (SELECT {period} AS period, max({time_column}) AS last "
+            f" FROM (SELECT {restrict_period} AS period, max({time_column}) AS last "
             f"       FROM {table} GROUP BY 1) p)"
         )
-        restrict = f" WHERE {period} = {latest_complete}"
+        restrict = f" WHERE {restrict_period} = {latest_complete}"
         scanned_where = restrict
         latest = fetch_one(connection, f"SELECT {latest_complete} AS covers")
         covers = latest["covers"] if latest else None
@@ -620,17 +657,17 @@ def _run(
         )
     elif _is_windowed(context.kpi):
         source = (
-            f"(SELECT {dimension} AS {label}, {measure} AS {WINDOWED_MEASURE} "
+            f"(SELECT {dimension} AS {DIMENSION_ALIAS}, {measure} AS {WINDOWED_MEASURE} "
             f"FROM {table}{restrict}) w"
         )
         restrict = ""
-        grouped_by = label
+        grouped_by = DIMENSION_ALIAS
         aggregate = f"avg({WINDOWED_MEASURE}) AS measure"
     else:
         aggregate = f"{measure} AS measure"
 
     sql = (
-        f"SELECT {grouped_by} AS {label}, {aggregate}, count(*) AS observations "
+        f"SELECT {grouped_by} AS {DIMENSION_ALIAS}, {aggregate}, count(*) AS observations "
         f"FROM {source}{restrict} GROUP BY 1 HAVING count(*) > 0 "
         f"ORDER BY {order} LIMIT %(limit)s"
     )
@@ -660,7 +697,7 @@ def _run(
         duration_ms=duration_ms,
         as_of=as_of["as_of"] if as_of else None,
         covers=covers,
-        grain=grain,
+        grain=restrict_grain,
     )
 
 
@@ -708,7 +745,7 @@ def _compose(
         )
 
     values = [
-        (row[label], _quantise(row["measure"], unit, rubric), row["observations"])
+        (row[DIMENSION_ALIAS], _quantise(row["measure"], unit, rubric), row["observations"])
         for row in rows
     ]
     total = sum((value for _, value, _ in values if value is not None), start=Decimal(0))
@@ -792,8 +829,9 @@ def _compose(
         if total and top is not None:
             share = (top / total * rubric.number(PERCENT_SCALE_PATH)).quantize(PERCENT_POINTS)
             claims["top_share"] = share
+        verb = "trails" if plan.ascending else "leads"
         headline = (
-            f"{_label(top_label)} leads on {name.lower()} at {_format(top, unit)}"
+            f"{_label(top_label)} {verb} on {name.lower()} at {_format(top, unit)}"
             + (f", {share}% of the total across {len(values)} {label.replace('_', ' ')}s."
                if share is not None else f" across {len(values)} groups.")
         )
@@ -916,6 +954,7 @@ class AnalyticRuntime:
             # I12: the agent's binding intersected with the caller's grant. The
             # planner only ever sees columns both sides hold.
             binding_columns=readable_binding,
+            column_types=dict(context.product["column_types"]),
             limit=int(self._rubric.number(ROW_LIMIT_PATH)),
         )
 
@@ -967,6 +1006,7 @@ class AnalyticRuntime:
             table=table_payload,
             citations=[citation],
             kpi_definitions=[plan.kpi_id],
+            measure_names=[context.kpi["kpi_name"]],
             tool_calls=[call],
             rows_scanned=executed.rows_scanned,
             latency_ms=elapsed_ms(started),

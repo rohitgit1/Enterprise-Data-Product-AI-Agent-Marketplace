@@ -134,6 +134,22 @@ AGENT_IDENTITIES: list[tuple[str, str]] = [
     ("AG-TRN-001", "Delivery SLA Sentinel"),
     ("AG-UTL-001", "Outage Impact Analyst"),
     ("AG-MFG-001", "Yield & Downtime Analyst"),
+    ("AG-ENG-001", "Load & Demand Analyst"),
+    ("AG-BNK-003", "Cross-Hold Analyst"),
+    ("AG-HLT-003", "Care Access & Adherence Analyst"),
+    ("AG-INS-003", "Underwriting Result Analyst"),
+    ("AG-RTL-003", "Trading Margin Analyst"),
+    ("AG-TCH-002", "Account Retention Analyst"),
+    ("AG-TEL-003", "Subscriber Experience Analyst"),
+    ("AG-TRN-002", "Fleet Utilisation Analyst"),
+    ("AG-UTL-002", "Restoration Performance Analyst"),
+    ("AG-BNK-004", "Credit Portfolio Analyst"),
+    ("AG-TCH-003", "Service Reliability Analyst"),
+    ("AG-TRN-003", "Freight Cost Analyst"),
+    ("AG-MFG-002", "Supplier Quality Analyst"),
+    ("AG-HLT-004", "Care Capacity Analyst"),
+    ("AG-INS-004", "Policyholder Relationship Analyst"),
+    ("AG-MFG-003", "Equipment Reliability Analyst"),
 ]
 
 ORG_UNIT_FOR_INDUSTRY = {

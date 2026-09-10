@@ -1,0 +1,118 @@
+{
+  "agent_id": "AG-UTL-002",
+  "agent_name": "Restoration Performance Analyst",
+  "agent_version_id": "AGV-AG-UTL-002-1.0.0",
+  "analysis_type": "performance_ranking",
+  "answer": {
+    "headline": "FDR-107 leads on average restoration time at 199.53 minutes, 14.94% of the total across 7 feeders.",
+    "narrative": "Ranked by the certified definition KPI-RESTORE-064 over 21,600 rows in DP-UTL-001.",
+    "table": {
+      "columns": [
+        "feeder",
+        "KPI-RESTORE-064",
+        "observations"
+      ],
+      "rows": [
+        [
+          "FDR-107",
+          199.53,
+          3240
+        ],
+        [
+          "FDR-101",
+          196.26,
+          3060
+        ],
+        [
+          "FDR-106",
+          192.93,
+          3600
+        ],
+        [
+          "FDR-103",
+          192.64,
+          2880
+        ],
+        [
+          "FDR-102",
+          188.08,
+          3510
+        ],
+        [
+          "FDR-104",
+          183.49,
+          2880
+        ],
+        [
+          "FDR-105",
+          182.96,
+          2430
+        ]
+      ]
+    },
+    "visual": {
+      "spec": {
+        "direction": "lower_is_better",
+        "target": 110.0,
+        "unit": "minutes",
+        "x": "feeder",
+        "y": "KPI-RESTORE-064"
+      },
+      "type": "bar"
+    }
+  },
+  "citations": [
+    {
+      "as_of": "2026-09-05",
+      "columns": [
+        "outage_id",
+        "observed_date",
+        "feeder",
+        "region",
+        "cause_class",
+        "restoration_minutes",
+        "major_event_day"
+      ],
+      "contract_version": "3.7.0",
+      "product_id": "DP-UTL-001"
+    }
+  ],
+  "confidence": 0.93,
+  "confidence_display": "0.93",
+  "exchange_id": "DEMO-AG-UTL-002-02",
+  "kpi_definitions": [
+    "KPI-RESTORE-064"
+  ],
+  "notes": [],
+  "question": "Which feeders are slowest to restore?",
+  "recorded_at": "2026-09-05T23:31:01.977017+00:00",
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "trace": {
+    "cost_display": "$0.0020",
+    "cost_usd": 0.002,
+    "latency_ms": 18,
+    "rows_scanned": 21600,
+    "runtime": "analytic",
+    "tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_calls": [
+      {
+        "arguments": {
+          "grain": "month",
+          "group_by": "feeder",
+          "limit": 24,
+          "measure": "((sum(restoration_minutes))::numeric / NULLIF((count(distinct outage_id))::numeric, 0))",
+          "period": "all periods",
+          "table": "MARKETPLACE_DEMO.t_dp_utl_001"
+        },
+        "cost_class": "small",
+        "duration_ms": 15,
+        "rows_returned": 7,
+        "rows_scanned": 21600,
+        "tool": "query_dp_utl_001"
+      }
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "agent_id": "AG-RTL-003",
+  "agent_name": "Trading Performance Analyst",
+  "agent_version_id": "AGV-AG-RTL-003-1.0.0",
+  "analysis_type": "gap_analysis",
+  "answer": {
+    "headline": "express leads on basket abandonment rate at 70.26%, 37.05% of the total across 3 store formats.",
+    "narrative": "Ranked by the certified definition KPI-ABANDON-076 over 78,000 rows in DP-RTL-003.",
+    "table": {
+      "columns": [
+        "store_format",
+        "KPI-ABANDON-076",
+        "observations"
+      ],
+      "rows": [
+        [
+          "express",
+          70.26,
+          24900
+        ],
+        [
+          "large",
+          60.0,
+          24300
+        ],
+        [
+          "compact",
+          59.39,
+          28800
+        ]
+      ]
+    },
+    "visual": {
+      "spec": {
+        "direction": "lower_is_better",
+        "target": 62.0,
+        "unit": "percent",
+        "x": "store_format",
+        "y": "KPI-ABANDON-076"
+      },
+      "type": "bar"
+    }
+  },
+  "citations": [
+    {
+      "as_of": "2026-09-05T00:00:00+00:00",
+      "columns": [
+        "visit_id",
+        "visit_timestamp",
+        "region",
+        "channel",
+        "store_format",
+        "entry_category",
+        "basket_started",
+        "basket_abandoned"
+      ],
+      "contract_version": "1.0.0",
+      "product_id": "DP-RTL-003"
+    }
+  ],
+  "confidence": 0.93,
+  "confidence_display": "0.93",
+  "exchange_id": "DEMO-AG-RTL-003-04",
+  "kpi_definitions": [
+    "KPI-ABANDON-076"
+  ],
+  "notes": [],
+  "question": "Where do we abandon most baskets by store format?",
+  "recorded_at": "2026-09-05T23:31:00.614840+00:00",
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "trace": {
+    "cost_display": "$0.0200",
+    "cost_usd": 0.02,
+    "latency_ms": 162,
+    "rows_scanned": 78000,
+    "runtime": "analytic",
+    "tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_calls": [
+      {
+        "arguments": {
+          "grain": "month",
+          "group_by": "store_format",
+          "limit": 24,
+          "measure": "((count(distinct visit_id) filter (where basket_abandoned))::numeric / NULLIF((count(distinct visit_id) filter (where basket_started))::numeric, 0) * 100)",
+          "period": "all periods",
+          "table": "MARKETPLACE_DEMO.t_dp_rtl_003"
+        },
+        "cost_class": "medium",
+        "duration_ms": 160,
+        "rows_returned": 3,
+        "rows_scanned": 78000,
+        "tool": "query_dp_rtl_003"
+      }
+    ]
+  }
+}

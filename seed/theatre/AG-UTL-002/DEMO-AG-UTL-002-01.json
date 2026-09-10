@@ -1,0 +1,113 @@
+{
+  "agent_id": "AG-UTL-002",
+  "agent_name": "Restoration Performance Analyst",
+  "agent_version_id": "AGV-AG-UTL-002-1.0.0",
+  "analysis_type": "driver_ranking",
+  "answer": {
+    "headline": "third_party leads on average restoration time at 192.98 minutes, 20.18% of the total across 6 cause classs.",
+    "narrative": "Ranked by the certified definition KPI-RESTORE-064 over 21,600 rows in DP-UTL-001.",
+    "table": {
+      "columns": [
+        "cause_class",
+        "KPI-RESTORE-064",
+        "observations"
+      ],
+      "rows": [
+        [
+          "third_party",
+          192.98,
+          277
+        ],
+        [
+          "weather",
+          192.06,
+          112
+        ],
+        [
+          "equipment",
+          191.72,
+          287
+        ],
+        [
+          "animal",
+          190.58,
+          300
+        ],
+        [
+          "vegetation",
+          189.06,
+          306
+        ],
+        [
+          "None",
+          null,
+          20318
+        ]
+      ]
+    },
+    "visual": {
+      "spec": {
+        "direction": "lower_is_better",
+        "target": 110.0,
+        "unit": "minutes",
+        "x": "cause_class",
+        "y": "KPI-RESTORE-064"
+      },
+      "type": "bar"
+    }
+  },
+  "citations": [
+    {
+      "as_of": "2026-09-05",
+      "columns": [
+        "outage_id",
+        "observed_date",
+        "feeder",
+        "region",
+        "cause_class",
+        "restoration_minutes",
+        "major_event_day"
+      ],
+      "contract_version": "3.7.0",
+      "product_id": "DP-UTL-001"
+    }
+  ],
+  "confidence": 0.93,
+  "confidence_display": "0.93",
+  "exchange_id": "DEMO-AG-UTL-002-01",
+  "kpi_definitions": [
+    "KPI-RESTORE-064"
+  ],
+  "notes": [],
+  "question": "Which cause classes take longest to restore?",
+  "recorded_at": "2026-09-05T23:31:01.957346+00:00",
+  "rubric_version_id": "RV-TEN-DEMO-agent_runtime-c8a350ad6765",
+  "trace": {
+    "cost_display": "$0.0020",
+    "cost_usd": 0.002,
+    "latency_ms": 14,
+    "rows_scanned": 21600,
+    "runtime": "analytic",
+    "tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_calls": [
+      {
+        "arguments": {
+          "grain": "month",
+          "group_by": "cause_class",
+          "limit": 24,
+          "measure": "((sum(restoration_minutes))::numeric / NULLIF((count(distinct outage_id))::numeric, 0))",
+          "period": "all periods",
+          "table": "MARKETPLACE_DEMO.t_dp_utl_001"
+        },
+        "cost_class": "small",
+        "duration_ms": 11,
+        "rows_returned": 6,
+        "rows_scanned": 21600,
+        "tool": "query_dp_utl_001"
+      }
+    ]
+  }
+}
